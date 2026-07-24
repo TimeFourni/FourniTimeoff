@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fourni Time | Détail Produit</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0b10;
+            --bg-card: rgba(20, 24, 35, 0.75);
+            --neon-cyan: #00f0ff;
+            --neon-purple: #bd00ff;
+            --text-main: #e2e8f0;
+            --text-muted: #8a99ad;
+            --border-glow: rgba(0, 240, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 1rem;
+            padding-bottom: 90px;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(189, 0, 255, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 240, 255, 0.08) 0px, transparent 50%);
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .product-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .product-media {
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            min-height: 250px;
+        }
+
+        .product-media img {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .product-media .emoji-display {
+            font-size: 5rem;
+        }
+
+        .product-details {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-cat {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+            margin-bottom: 0.25rem;
+        }
+
+        .product-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (min-width: 550px) {
+            .product-container {
+                flex-direction: row;
+                align-items: stretch;
+            }
+
+            .product-media {
+                flex: 1;
+                min-height: 320px;
+                border-bottom: none;
+                border-right: 1px solid rgba(255, 255, 255, 0.08);
+                padding: 2rem;
+            }
+
+            .product-details {
+                flex: 1;
+                padding: 2rem;
+                justify-content: center;
+            }
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .selector-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .pill-btn {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .pill-btn.active {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.2);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        .qty-select {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-purple);
+            padding: 0.6rem;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        /* Section Suggestions */
+        .suggestions-section {
+            max-width: 900px;
+            margin: 2rem auto 0 auto;
+        }
+
+        .suggestions-title {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            border-left: 3px solid var(--neon-purple);
+            padding-left: 0.5rem;
+        }
+
+        .suggestions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 1rem;
+        }
+
+        .sug-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .sug-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--neon-purple);
+        }
+
+        .sug-img {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sug-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .sug-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.2;
+            margin-bottom: 0.25rem;
+        }
+
+        .sug-price {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .fixed-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 11, 16, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 240, 255, 0.2);
+            padding: 0.8rem 1rem;
+            z-index: 100;
+        }
+
+        .add-btn {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            display: block;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            color: var(--bg-dark);
+            padding: 0.9rem;
+            border-radius: 6px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-btn">⬅️ Produits</a>
+
+    <div class="product-container" id="product-view">
+        <p style="padding: 2rem; text-align: center; color: var(--text-muted);">Chargement de l'artefact...</p>
+    </div>
+
+    <!-- Section Suggestions -->
+    <div class="suggestions-section" id="suggestions-section" style="display: none;">
+        <h3 class="suggestions-title">💡 Produits suggérés</h3>
+        <div class="suggestions-grid" id="suggestions-grid"></div>
+    </div>
+
+    <div class="fixed-bottom-bar">
+        <button class="add-btn" onclick="addToCartAndGoBack()">🛒 Ajouter au panier</button>
+    </div>
+
+    <script>
+        // CONFIGURATION SUPABASE
+        const SUPABASE_URL = "https://mcntqbyrmsplfljwwzqj.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jbnRxYnlybXNwbGZsand3enFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4MTk4MzEsImV4cCI6MjEwMDM5NTgzMX0.5H6oNINjcIFuqRvNv5II0Pj8jJecMM4QnLVoV8sDWBw";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const rawId = urlParams.get('id');
+
+        let product = null;
+        let allProducts = [];
+        let selectedSize = "N/A";
+        let categories = JSON.parse(localStorage.getItem('fourni_market_categories')) || [];
+
+        function isProductDraft(p) {
+            return p.draft === true || p.draft === "true";
+        }
+
+        async function initProductPage() {
+            if (!rawId) {
+                document.getElementById('product-view').innerHTML = `<p style="padding: 2rem; text-align: center; color: var(--text-muted);">Erreur : Artefact introuvable.</p>`;
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient.from('products').select('*');
+                if (error || !data) throw error;
+                allProducts = data;
+                product = allProducts.find(p => String(p.id) === String(rawId));
+            } catch (err) {
+                console.warn("Erreur chargement Supabase, tentative en local :", err);
+                allProducts = JSON.parse(localStorage.getItem('fourni_market_products')) || [];
+                product = allProducts.find(p => String(p.id) === String(rawId));
+            }
+
+            if (!product) {
+                document.getElementById('product-view').innerHTML = `<p style="padding: 2rem; text-align: center; color: var(--text-muted);">Erreur : Artefact introuvable.</p>`;
+            } else {
+                renderProductPage(product);
+                renderSuggestions(product);
+            }
+        }
+
+        function selectPill(element, value) {
+            document.querySelectorAll('.pill-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            selectedSize = value;
+        }
+
+        function renderProductPage(prod) {
+            const container = document.getElementById('product-view');
+            
+            let mediaHtml = `<span class="emoji-display">${prod.emoji || '📦'}</span>`;
+            if (prod.image) {
+                mediaHtml = `<img src="${prod.image}" alt="${prod.name}">`;
+            }
+
+            const catObj = categories.find(c => c.id === prod.category);
+            const catLabel = catObj ? catObj.label : prod.category;
+
+            let selectorHtml = '';
+            let effectiveSizeType = prod.sizeType;
+            if (!effectiveSizeType) {
+                if (prod.category === 'chaussures') effectiveSizeType = 'num_36_46';
+                else if (prod.category === 'vetements' || prod.category === 'maillots-de-foot') effectiveSizeType = 'xs_xl';
+                else effectiveSizeType = 'unique';
+            }
+
+            if (effectiveSizeType === 'num_36_46') {
+                const sizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
+                selectedSize = sizes[3];
+                selectorHtml = `
+                    <div class="selector-group">
+                        <label>Pointure</label>
+                        <div class="pills-container">
+                            ${sizes.map(s => `<button class="pill-btn ${s === selectedSize ? 'active' : ''}" onclick="selectPill(this, '${s}')">${s}</button>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (effectiveSizeType === 'xs_xl') {
+                const sizes = ['XS', 'S', 'M', 'L', 'XL'];
+                selectedSize = 'M';
+                selectorHtml = `
+                    <div class="selector-group">
+                        <label>Taille</label>
+                        <div class="pills-container">
+                            ${sizes.map(s => `<button class="pill-btn ${s === 'M' ? 'active' : ''}" onclick="selectPill(this, '${s}')">${s}</button>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                selectedSize = 'Taille unique';
+                selectorHtml = `
+                    <div class="selector-group">
+                        <label>Taille / Option</label>
+                        <div class="pills-container">
+                            <button class="pill-btn active" onclick="selectPill(this, 'Taille unique')">Taille unique</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            let qtyOptions = '';
+            for (let i = 1; i <= 20; i++) {
+                qtyOptions += `<option value="${i}">${i}</option>`;
+            }
+
+            let qtySelectorHtml = `
+                <div class="selector-group">
+                    <label for="qty-select">Quantité</label>
+                    <select id="qty-select" class="qty-select">
+                        ${qtyOptions}
+                    </select>
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="product-media">${mediaHtml}</div>
+                <div class="product-details">
+                    <span class="product-cat">${catLabel}</span>
+                    <h1 class="product-title">${prod.name}</h1>
+                    <p class="product-desc">${prod.desc || ''}</p>
+                    <div class="product-price">${parseFloat(prod.price).toFixed(2)} €</div>
+                    ${selectorHtml}
+                    ${qtySelectorHtml}
+                </div>
+            `;
+        }
+
+        function renderSuggestions(currentProd) {
+            const sugSection = document.getElementById('suggestions-section');
+            const sugGrid = document.getElementById('suggestions-grid');
+            sugGrid.innerHTML = '';
+
+            let suggestedItems = [];
+
+            // Exclure formellement les brouillons ainsi que le produit en cours d'affichage
+            const validProducts = allProducts.filter(p => !isProductDraft(p) && String(p.id) !== String(currentProd.id));
+
+            // Suggestions manuelles définies
+            if (currentProd.suggestions && Array.isArray(currentProd.suggestions) && currentProd.suggestions.length > 0) {
+                suggestedItems = validProducts.filter(p => currentProd.suggestions.map(String).includes(String(p.id)));
+            }
+
+            // Si moins de 3 suggestions, compléter aléatoirement avec d'autres produits non brouillons
+            if (suggestedItems.length < 3) {
+                let remaining = validProducts.filter(p => !suggestedItems.some(s => String(s.id) === String(p.id)));
+                remaining.sort(() => Math.random() - 0.5);
+                suggestedItems = [...suggestedItems, ...remaining.slice(0, 4 - suggestedItems.length)];
+            }
+
+            if (suggestedItems.length === 0) return;
+
+            sugSection.style.display = 'block';
+
+            suggestedItems.forEach(item => {
+                let visuel = item.image ? `<img src="${item.image}" alt="${item.name}">` : item.emoji || '📦';
+                const card = document.createElement('div');
+                card.className = 'sug-card';
+                card.onclick = () => window.location.href = `produit.html?id=${item.id}`;
+                card.innerHTML = `
+                    <div class="sug-img">${visuel}</div>
+                    <div class="sug-title">${item.name}</div>
+                    <div class="sug-price">${parseFloat(item.price).toFixed(2)} €</div>
+                `;
+                sugGrid.appendChild(card);
+            });
+        }
+
+        function addToCartAndGoBack() {
+            if (!product) return;
+            
+            const qtySelect = document.getElementById('qty-select');
+            const chosenQty = qtySelect ? parseInt(qtySelect.value, 10) : 1;
+            
+            let cart = JSON.parse(localStorage.getItem('fourni_market_cart')) || [];
+            
+            const existingItem = cart.find(item => String(item.id) === String(product.id) && item.size === selectedSize);
+
+            if (existingItem) {
+                existingItem.qty += chosenQty;
+            } else {
+                cart.push({ id: product.id, size: selectedSize, qty: chosenQty });
+            }
+            
+            try {
+                localStorage.setItem('fourni_market_cart', JSON.stringify(cart));
+            } catch(e) {}
+
+            window.location.href = 'index.html';
+        }
+
+        initProductPage();
+    </script>
+</body>
+</html>
