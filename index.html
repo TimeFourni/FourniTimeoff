@@ -915,17 +915,14 @@
 
         emailjs.init(EMAILJS_PUBLIC_KEY);
 
-        // HELPER POUR VERIFIER LE STATUT DE BROUILLON (GERANT STRING ET BOOLEAN)
         function isProductDraft(p) {
             return p.draft === true || p.draft === "true";
         }
 
-        // --- SYNCHRONISATION EN TEMPS RÉEL VIA SUPABASE ---
         async function fetchProducts() {
             await fetchCategoriesFromDb();
             await fetchProductsFromDb();
 
-            // Abonnement aux modifications de la table "products"
             supabaseClient
                 .channel('realtime_products')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async () => {
@@ -933,7 +930,6 @@
                 })
                 .subscribe();
 
-            // Abonnement aux modifications de la table "categories"
             supabaseClient
                 .channel('realtime_categories')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, async () => {
@@ -1032,13 +1028,11 @@
             const navContainer = document.getElementById('drawer-content');
             navContainer.innerHTML = '';
 
-            // Bouton "Tous les produits"
             const allRow = document.createElement('div');
             allRow.className = 'cat-item-row';
             allRow.innerHTML = `<button class="filter-btn ${currentCategory === 'all' ? 'active' : ''}" onclick="setCategory('all', this)"><span>Tous les produits</span><span>➔</span></button>`;
             navContainer.appendChild(allRow);
 
-            // Génération des boutons de catégorie
             categories.forEach(cat => {
                 const row = document.createElement('div');
                 row.className = 'cat-item-row';
@@ -1053,7 +1047,6 @@
                 navContainer.appendChild(row);
             });
 
-            // Bouton Brouillon visible si le Mode Studio est activé
             if (isEditMode) {
                 const draftRow = document.createElement('div');
                 draftRow.className = 'cat-item-row';
@@ -1061,7 +1054,6 @@
                 navContainer.appendChild(draftRow);
             }
 
-            // Mise à jour de la liste déroulante du Studio
             const selectContainer = document.getElementById('new-category');
             if (selectContainer) {
                 selectContainer.innerHTML = '';
@@ -1200,7 +1192,7 @@
                         <h3 class="product-title" onclick="window.location.href='produit.html?id=${prod.id}'">${prod.name}</h3>
                         <p class="product-desc">${prod.desc || ''}</p>
                         <div class="product-price-row">
-                            <span class="product-price">${parseFloat(prod.price).toFixed(2)} €</span>
+                            <span class="product-price">${parseFloat(prod.price || 0).toFixed(2)} €</span>
                             <button class="add-to-cart" onclick="window.location.href='produit.html?id=${prod.id}'">Voir</button>
                         </div>
                     </div>
@@ -1484,7 +1476,7 @@
                 
                 cart.forEach(item => {
                     const freshProd = products.find(p => String(p.id) === String(item.id));
-                    let price = freshProd ? parseFloat(freshProd.price) : 0;
+                    let price = freshProd ? parseFloat(freshProd.price || 0) : 0;
 
                     totalCount += item.qty;
                     subtotal += price * item.qty;
@@ -1562,7 +1554,7 @@
             cart.forEach(item => {
                 const freshProd = products.find(p => String(p.id) === String(item.id));
                 const itemName = freshProd ? freshProd.name : "Item inconnu";
-                let price = freshProd ? parseFloat(freshProd.price) : 0;
+                let price = freshProd ? parseFloat(freshProd.price || 0) : 0;
                 let sizeText = item.size !== "N/A" ? ` (Taille: ${item.size})` : "";
                 
                 subtotal += price * item.qty;
@@ -1598,7 +1590,7 @@
                     alert("❌ Échec lors de la transmission : " + JSON.stringify(error));
                 })
                 .finally(() => {
-                    checkoutBtn.innerText = "📧 Envoyer la commande par Email";
+                    checkoutBtn.innerText = "📧 Envoyer la commande";
                     checkoutBtn.disabled = false;
                 });
         }

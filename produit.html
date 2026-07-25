@@ -189,7 +189,6 @@
             width: 100%;
         }
 
-        /* Section Suggestions */
         .suggestions-section {
             max-width: 900px;
             margin: 2rem auto 0 auto;
@@ -319,7 +318,7 @@
         let product = null;
         let allProducts = [];
         let selectedSize = "N/A";
-        let categories = JSON.parse(localStorage.getItem('fourni_market_categories')) || [];
+        let categories = [];
 
         function isProductDraft(p) {
             return p.draft === true || p.draft === "true";
@@ -331,14 +330,22 @@
                 return;
             }
 
+            // Chargement synchrone des catégories et produits depuis Supabase
             try {
-                const { data, error } = await supabaseClient.from('products').select('*');
-                if (error || !data) throw error;
-                allProducts = data;
+                const [prodRes, catRes] = await Promise.all([
+                    supabaseClient.from('products').select('*'),
+                    supabaseClient.from('categories').select('*')
+                ]);
+
+                if (prodRes.data) allProducts = prodRes.data;
+                if (catRes.data && catRes.data.length > 0) categories = catRes.data;
+                else categories = JSON.parse(localStorage.getItem('fourni_market_categories')) || [];
+
                 product = allProducts.find(p => String(p.id) === String(rawId));
             } catch (err) {
                 console.warn("Erreur chargement Supabase, tentative en local :", err);
                 allProducts = JSON.parse(localStorage.getItem('fourni_market_products')) || [];
+                categories = JSON.parse(localStorage.getItem('fourni_market_categories')) || [];
                 product = allProducts.find(p => String(p.id) === String(rawId));
             }
 
@@ -377,7 +384,7 @@
 
             if (effectiveSizeType === 'num_36_46') {
                 const sizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
-                selectedSize = sizes[3];
+                selectedSize = sizes[3]; // Taille par défaut : 39
                 selectorHtml = `
                     <div class="selector-group">
                         <label>Pointure</label>
@@ -388,12 +395,12 @@
                 `;
             } else if (effectiveSizeType === 'xs_xl') {
                 const sizes = ['XS', 'S', 'M', 'L', 'XL'];
-                selectedSize = 'M';
+                selectedSize = 'M'; // Taille par défaut : M
                 selectorHtml = `
                     <div class="selector-group">
                         <label>Taille</label>
                         <div class="pills-container">
-                            ${sizes.map(s => `<button class="pill-btn ${s === 'M' ? 'active' : ''}" onclick="selectPill(this, '${s}')">${s}</button>`).join('')}
+                            ${sizes.map(s => `<button class="pill-btn ${s === selectedSize ? 'active' : ''}" onclick="selectPill(this, '${s}')">${s}</button>`).join('')}
                         </div>
                     </div>
                 `;
@@ -429,7 +436,7 @@
                     <span class="product-cat">${catLabel}</span>
                     <h1 class="product-title">${prod.name}</h1>
                     <p class="product-desc">${prod.desc || ''}</p>
-                    <div class="product-price">${parseFloat(prod.price).toFixed(2)} €</div>
+                    <div class="product-price">${parseFloat(prod.price || 0).toFixed(2)} €</div>
                     ${selectorHtml}
                     ${qtySelectorHtml}
                 </div>
@@ -443,15 +450,12 @@
 
             let suggestedItems = [];
 
-            // Exclure formellement les brouillons ainsi que le produit en cours d'affichage
             const validProducts = allProducts.filter(p => !isProductDraft(p) && String(p.id) !== String(currentProd.id));
 
-            // Suggestions manuelles définies
             if (currentProd.suggestions && Array.isArray(currentProd.suggestions) && currentProd.suggestions.length > 0) {
                 suggestedItems = validProducts.filter(p => currentProd.suggestions.map(String).includes(String(p.id)));
             }
 
-            // Si moins de 3 suggestions, compléter aléatoirement avec d'autres produits non brouillons
             if (suggestedItems.length < 3) {
                 let remaining = validProducts.filter(p => !suggestedItems.some(s => String(s.id) === String(p.id)));
                 remaining.sort(() => Math.random() - 0.5);
@@ -470,7 +474,7 @@
                 card.innerHTML = `
                     <div class="sug-img">${visuel}</div>
                     <div class="sug-title">${item.name}</div>
-                    <div class="sug-price">${parseFloat(item.price).toFixed(2)} €</div>
+                    <div class="sug-price">${parseFloat(item.price || 0).toFixed(2)} €</div>
                 `;
                 sugGrid.appendChild(card);
             });
@@ -494,7 +498,9 @@
             
             try {
                 localStorage.setItem('fourni_market_cart', JSON.stringify(cart));
-            } catch(e) {}
+            } catch(e) {
+                console.error("Erreur de sauvegarde dans le panier", e);
+            }
 
             window.location.href = 'index.html';
         }
