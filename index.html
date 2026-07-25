@@ -949,7 +949,7 @@
                 }
             } catch (err) {
                 console.warn("Erreur chargement catégories Supabase, mode local:", err);
-                categories = JSON.parse(localStorage.getItem('fourni_market_categories')) || defaultCategories;
+                categories = defaultCategories;
             }
             renderCategories();
             filterProducts();
@@ -962,11 +962,11 @@
                 if (data && data.length > 0) {
                     products = data;
                 } else {
-                    products = JSON.parse(localStorage.getItem('fourni_market_products')) || defaultProducts;
+                    products = [...defaultProducts];
                 }
             } catch (err) {
-                console.warn("Chargement Supabase échoué, utilisation des données locales:", err);
-                products = JSON.parse(localStorage.getItem('fourni_market_products')) || defaultProducts;
+                console.warn("Chargement Supabase échoué, utilisation du fallback:", err);
+                products = [...defaultProducts];
             }
             renderCategories();
             filterProducts();
@@ -1086,7 +1086,6 @@
                 console.warn("Avertissement enregistrement catégorie BDD:", err);
             }
 
-            localStorage.setItem('fourni_market_categories', JSON.stringify(categories));
             renderCategories();
         }
 
@@ -1106,7 +1105,6 @@
                 console.warn("Avertissement mise à jour catégorie BDD:", err);
             }
 
-            localStorage.setItem('fourni_market_categories', JSON.stringify(categories));
             renderCategories();
             filterProducts();
         }
@@ -1134,8 +1132,6 @@
             } catch (err) {
                 console.warn("Avertissement suppression catégorie BDD:", err);
             }
-
-            localStorage.setItem('fourni_market_categories', JSON.stringify(categories));
 
             if (currentCategory === catId) {
                 currentCategory = 'all';
@@ -1239,7 +1235,7 @@
                     console.error("Erreur de synchronisation Supabase:", error);
                 }
             } catch(e) {
-                console.warn("Mise à jour Supabase échouée, enregistrement local", e);
+                console.warn("Mise à jour Supabase échouée", e);
             }
             saveToLocalStorage();
         }
@@ -1318,9 +1314,7 @@
                     }
                 } catch (err) {
                     console.error("Erreur insertion Supabase:", err);
-                    newProd.id = Date.now();
-                    products.push(newProd);
-                    saveToLocalStorage();
+                    alert("Erreur lors de l'enregistrement dans la base de données.");
                 }
 
                 filterProducts();
@@ -1362,11 +1356,10 @@
 
         function saveToLocalStorage() {
             try {
-                localStorage.setItem('fourni_market_products', JSON.stringify(products));
+                // On stocke uniquement le panier localement pour éviter de dépasser la limite de 5Mo avec les images
                 localStorage.setItem('fourni_market_cart', JSON.stringify(cart));
             } catch (e) {
-                console.error("Erreur de sauvegarde LocalStorage:", e);
-                alert("⚠️ Erreur : Mémoire locale saturée.");
+                console.error("Erreur sauvegarde panier:", e);
             }
         }
 
@@ -1376,8 +1369,6 @@
                     await supabaseClient.from('products').delete().neq('id', 0);
                     await supabaseClient.from('categories').delete().neq('id', '');
                 } catch(e) {}
-                localStorage.removeItem('fourni_market_products');
-                localStorage.removeItem('fourni_market_categories');
                 localStorage.removeItem('fourni_market_cart');
                 categories = [...defaultCategories];
                 cart = [];
