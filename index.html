@@ -843,7 +843,7 @@
             </div>
 
             <div class="shipping-notice" id="shipping-notice">
-                🚚 Livraison gratuite à partir de 40,00 € d'achat !
+                🚚 Livraison gratuite à partir de 50,00 € d'achat !
             </div>
 
             <div class="client-info-section" id="client-info-section">
@@ -1498,19 +1498,19 @@
 
             let shippingFee = 0;
             if (cart.length > 0) {
-                if (subtotal >= 40) {
+                if (subtotal >= 50) {
                     shippingFee = 0;
                     if (shippingNotice) {
-                        shippingNotice.innerHTML = "🎉 <strong>Livraison OFFERTE !</strong> Votre commande dépasse 40,00 €.";
+                        shippingNotice.innerHTML = "🎉 <strong>Livraison OFFERTE !</strong> Votre commande dépasse 50,00 €.";
                         shippingNotice.style.borderColor = "var(--neon-green)";
                         shippingNotice.style.color = "var(--neon-green)";
                         shippingNotice.style.background = "rgba(57, 255, 20, 0.1)";
                     }
                 } else {
                     shippingFee = 3.70;
-                    const remaining = (40 - subtotal).toFixed(2);
+                    const remaining = (50 - subtotal).toFixed(2);
                     if (shippingNotice) {
-                        shippingNotice.innerHTML = `🚚 Frais de livraison : <strong>3,70 €</strong> — Ajoutez encore <strong>${remaining} €</strong> pour bénéficier de la <strong>livraison gratuite</strong> (dès 40 €) !`;
+                        shippingNotice.innerHTML = `🚚 Frais de livraison : <strong>3,70 €</strong> — Ajoutez encore <strong>${remaining} €</strong> pour bénéficier de la <strong>livraison gratuite</strong> (dès 50 €) !`;
                         shippingNotice.style.borderColor = "var(--neon-cyan)";
                         shippingNotice.style.color = "var(--neon-cyan)";
                         shippingNotice.style.background = "rgba(0, 240, 255, 0.1)";
@@ -1561,7 +1561,7 @@
                 commandeDetails += `- ${itemName}${sizeText} (Qté : ${item.qty}) : ${(price * item.qty).toFixed(2)} €\n`;
             });
 
-            let shippingFee = subtotal >= 40 ? 0 : 3.70;
+            let shippingFee = subtotal >= 50 ? 0 : 3.70;
             commandeDetails += `\nSous-total : ${subtotal.toFixed(2)} €`;
             commandeDetails += `\nFrais de livraison : ${shippingFee === 0 ? "OFFERTS" : "3.70 €"}`;
 
