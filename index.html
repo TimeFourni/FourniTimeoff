@@ -1354,12 +1354,18 @@
             updateCartUI();
         }
 
+        // CORRECTION DE LA SAUVEGARDE SECURISEE LOCALSTORAGE
         function saveToLocalStorage() {
             try {
-                // On stocke uniquement le panier localement pour éviter de dépasser la limite de 5Mo avec les images
                 localStorage.setItem('fourni_market_cart', JSON.stringify(cart));
             } catch (e) {
-                console.error("Erreur sauvegarde panier:", e);
+                console.warn("Storage plein/bloqué. Nettoyage automatique en cours...");
+                localStorage.clear();
+                try {
+                    localStorage.setItem('fourni_market_cart', JSON.stringify(cart));
+                } catch (err) {
+                    console.error("Erreur critique d'accès au LocalStorage:", err);
+                }
             }
         }
 
