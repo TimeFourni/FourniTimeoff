@@ -84,7 +84,7 @@
         }
 
         .logo-img {
-            height: 42px; /* Agrandit pour correspondre exactement à la hauteur du 'F' */
+            height: 42px;
             width: auto;
             object-fit: contain;
             display: block;
@@ -135,6 +135,44 @@
             outline: none;
             border-color: var(--neon-cyan);
             box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+        }
+
+        /* --- BARRE DE FILTRAGE DES MARQUES --- */
+        .brand-filter-bar {
+            display: none;
+            gap: 0.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.3rem;
+            scrollbar-width: thin;
+        }
+
+        .brand-filter-bar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .brand-filter-bar::-webkit-scrollbar-thumb {
+            background: rgba(0, 240, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .brand-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-muted);
+            padding: 0.35rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .brand-pill.active {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
         }
 
         .cart-fab {
@@ -651,6 +689,13 @@
             color: var(--neon-cyan);
             letter-spacing: 0.5px;
             margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .product-brand {
+            color: var(--neon-purple);
+            font-weight: 700;
         }
 
         .product-title {
@@ -759,6 +804,9 @@
             </div>
         </div>
         <input type="text" class="search-bar" id="search-input" placeholder="Recherche d'artefacts..." oninput="filterProducts()">
+        
+        <!-- Barre de filtres par marque -->
+        <div class="brand-filter-bar" id="brand-filter-bar"></div>
     </header>
 
     <div class="studio-panel" id="studio-panel">
@@ -778,6 +826,10 @@
                 <div class="form-group">
                     <label>Catégorie</label>
                     <select id="new-category"></select>
+                </div>
+                <div class="form-group">
+                    <label>Marque</label>
+                    <input type="text" id="new-brand" placeholder="ex: Nike, Adidas, Apple, Sony...">
                 </div>
                 <div class="form-group">
                     <label>Type de Tailles</label>
@@ -907,12 +959,12 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const defaultProducts = [
-            { id: 1, name: "Veste Exo-Shell H-2", category: "vetements", price: 189.99, desc: "Veste thermorégulée imperméable avec fibres lumineuses.", emoji: "🧥", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
-            { id: 2, name: "Sneakers Matrix Runner", category: "chaussures", price: 245.00, desc: "Amortisseur cinétique et laçage automatique.", emoji: "👟", image: "", sizeType: "num_36_46", pinned: null, draft: false, suggestions: [] },
-            { id: 3, name: "Maillot France Domicile", category: "maillots-de-foot", price: 89.99, desc: "Maillot respirant haute performance.", emoji: "👕", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
-            { id: 4, name: "Hoodie Techwear Cyber-K", category: "vetements", price: 89.50, desc: "Tissu anti-scan RFID et capuche XXL.", emoji: "🥷", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
-            { id: 5, name: "Bottes Strato", category: "chaussures", price: 320.00, desc: "Semelles magnétiques haute densité.", emoji: "🥾", image: "", sizeType: "num_36_46", pinned: null, draft: false, suggestions: [] },
-            { id: 6, name: "Cyber-Pad Neural v4", category: "electronique", price: 430.00, desc: "Tablette ultra-fine à commandes biométriques.", emoji: "📱", image: "", sizeType: "unique", pinned: null, draft: false, suggestions: [] }
+            { id: 1, name: "Veste Exo-Shell H-2", category: "vetements", brand: "CyberGear", price: 189.99, desc: "Veste thermorégulée imperméable avec fibres lumineuses.", emoji: "🧥", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
+            { id: 2, name: "Sneakers Matrix Runner", category: "chaussures", brand: "Nike", price: 245.00, desc: "Amortisseur cinétique et laçage automatique.", emoji: "👟", image: "", sizeType: "num_36_46", pinned: null, draft: false, suggestions: [] },
+            { id: 3, name: "Maillot France Domicile", category: "maillots-de-foot", brand: "Nike", price: 89.99, desc: "Maillot respirant haute performance.", emoji: "👕", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
+            { id: 4, name: "Hoodie Techwear Cyber-K", category: "vetements", brand: "Adidas", price: 89.50, desc: "Tissu anti-scan RFID et capuche XXL.", emoji: "🥷", image: "", sizeType: "xs_xl", pinned: null, draft: false, suggestions: [] },
+            { id: 5, name: "Bottes Strato", category: "chaussures", brand: "Puma", price: 320.00, desc: "Semelles magnétiques haute densité.", emoji: "🥾", image: "", sizeType: "num_36_46", pinned: null, draft: false, suggestions: [] },
+            { id: 6, name: "Cyber-Pad Neural v4", category: "electronique", brand: "Apple", price: 430.00, desc: "Tablette ultra-fine à commandes biométriques.", emoji: "📱", image: "", sizeType: "unique", pinned: null, draft: false, suggestions: [] }
         ];
 
         const defaultCategories = [
@@ -927,6 +979,7 @@
         let cart = JSON.parse(localStorage.getItem('fourni_market_cart')) || [];
         
         let currentCategory = 'all';
+        let currentBrand = 'all';
         let isEditMode = false;
 
         const EMAILJS_PUBLIC_KEY = "2oiZDTGADwrXXNYGZ";
@@ -1086,6 +1139,52 @@
             }
         }
 
+        /* --- RENDU ET GESTION DES MARQUES POUR LA CATÉGORIE ACTIVE --- */
+        function renderBrandFilterBar() {
+            const bar = document.getElementById('brand-filter-bar');
+            bar.innerHTML = '';
+
+            if (currentCategory === 'all' || currentCategory === 'brouillon') {
+                bar.style.display = 'none';
+                return;
+            }
+
+            // Récupérer les produits actifs de la catégorie en cours
+            const catProducts = products.filter(p => !isProductDraft(p) && p.category === currentCategory);
+            
+            // Extraire les marques uniques (non vides)
+            const brands = [...new Set(catProducts.map(p => p.brand ? p.brand.trim() : '').filter(b => b !== ''))];
+
+            if (brands.length === 0) {
+                bar.style.display = 'none';
+                return;
+            }
+
+            bar.style.display = 'flex';
+
+            // Pill Tout
+            const allPill = document.createElement('button');
+            allPill.className = `brand-pill ${currentBrand === 'all' ? 'active' : ''}`;
+            allPill.innerText = 'Toutes les marques';
+            allPill.onclick = () => setBrand('all');
+            bar.appendChild(allPill);
+
+            // Pills de chaque marque
+            brands.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' })).forEach(b => {
+                const pill = document.createElement('button');
+                pill.className = `brand-pill ${currentBrand.toLowerCase() === b.toLowerCase() ? 'active' : ''}`;
+                pill.innerText = b;
+                pill.onclick = () => setBrand(b);
+                bar.appendChild(pill);
+            });
+        }
+
+        function setBrand(brand) {
+            currentBrand = brand;
+            renderBrandFilterBar();
+            filterProducts();
+        }
+
         async function addNewCategoryPrompt() {
             const catName = prompt("Nom de la nouvelle catégorie :");
             if (!catName || catName.trim() === "") return;
@@ -1182,6 +1281,7 @@
 
                 const catObj = categories.find(c => c.id === prod.category);
                 const catLabel = catObj ? catObj.label : prod.category;
+                const brandLabel = prod.brand ? `<span class="product-brand">${prod.brand}</span>` : '';
 
                 let pinBadge = '';
                 if (prod.pinned === 'all') pinBadge = '<span class="pinned-badge">📌 Épinglé (Tous)</span>';
@@ -1204,7 +1304,10 @@
                     ${pinBadge}
                     <div class="product-img-wrapper" onclick="window.location.href='produit.html?id=${prod.id}'">${visuelContent}</div>
                     <div class="product-info">
-                        <span class="product-cat">${catLabel} ${isDraft ? '(Brouillon)' : ''}</span>
+                        <div class="product-cat">
+                            <span>${catLabel} ${isDraft ? '(Brouillon)' : ''}</span>
+                            ${brandLabel}
+                        </div>
                         <h3 class="product-title" onclick="window.location.href='produit.html?id=${prod.id}'">${prod.name}</h3>
                         <p class="product-desc">${prod.desc || ''}</p>
                         <div class="product-price-row">
@@ -1241,6 +1344,7 @@
                 const { error } = await supabaseClient.from('products').update({
                     name: prod.name,
                     category: prod.category,
+                    brand: prod.brand,
                     price: prod.price,
                     desc: prod.desc,
                     sizeType: prod.sizeType,
@@ -1305,6 +1409,7 @@
             event.preventDefault();
             const name = document.getElementById('new-name').value;
             const category = document.getElementById('new-category').value;
+            const brand = document.getElementById('new-brand').value.trim();
             const sizeType = document.getElementById('new-size-type').value;
             const price = parseFloat(document.getElementById('new-price').value);
             const desc = document.getElementById('new-desc').value;
@@ -1318,7 +1423,7 @@
 
             const finishProductCreation = async () => {
                 const newProd = {
-                    name, category, price, desc, sizeType,
+                    name, category, brand, price, desc, sizeType,
                     emoji: source === 'emoji' ? emoji : "",
                     image: source === 'upload' ? imageBase64 : "",
                     pinned: null,
@@ -1398,6 +1503,7 @@
                 categories = [...defaultCategories];
                 cart = [];
                 currentCategory = 'all';
+                currentBrand = 'all';
                 renderCategories();
                 await fetchProducts();
             }
@@ -1405,6 +1511,7 @@
 
         function setCategory(cat, element) {
             currentCategory = cat;
+            currentBrand = 'all'; // Réinitialise le filtre de marque au changement de catégorie
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             if (element) element.classList.add('active');
             filterProducts();
@@ -1445,6 +1552,11 @@
             } else {
                 let catProds = products.filter(p => !isProductDraft(p) && p.category === currentCategory);
                 
+                // Application du filtre par MARQUE
+                if (currentBrand !== 'all') {
+                    catProds = catProds.filter(p => p.brand && p.brand.toLowerCase() === currentBrand.toLowerCase());
+                }
+
                 const pinnedCat = catProds.filter(p => p.pinned === 'category' || p.pinned === 'all');
                 let unpinned = catProds.filter(p => p.pinned !== 'category' && p.pinned !== 'all');
 
@@ -1456,10 +1568,13 @@
 
             if (searchQuery) {
                 filtered = filtered.filter(prod => 
-                    prod.name.toLowerCase().includes(searchQuery) || (prod.desc && prod.desc.toLowerCase().includes(searchQuery))
+                    prod.name.toLowerCase().includes(searchQuery) || 
+                    (prod.desc && prod.desc.toLowerCase().includes(searchQuery)) ||
+                    (prod.brand && prod.brand.toLowerCase().includes(searchQuery))
                 );
             }
 
+            renderBrandFilterBar();
             renderProducts(filtered);
         }
 
