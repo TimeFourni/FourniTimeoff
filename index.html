@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fourni Time | Studio Pro & Commandes</title>
+    <title>FourniTime | Studio Pro & Commandes</title>
     <!-- EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <!-- Supabase JS Client -->
@@ -68,10 +68,26 @@
             font-weight: 800;
             letter-spacing: 1.5px;
             text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1;
+        }
+
+        .logo-text {
             background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            line-height: 1;
+            display: inline-block;
+        }
+
+        .logo-img {
+            height: 42px; /* Agrandit pour correspondre exactement à la hauteur du 'F' */
+            width: auto;
+            object-fit: contain;
+            display: block;
         }
 
         .header-actions {
@@ -733,7 +749,11 @@
             <button class="icon-btn" onclick="openDrawer()">
                 <span>☰</span>
             </button>
-            <div class="logo">Fourni Time //</div>
+            <div class="logo">
+                <img src="logo.png" alt="Logo TF" class="logo-img">
+                <span class="logo-text">FourniTime</span>
+                <img src="logo.png" alt="Logo TF" class="logo-img">
+            </div>
             <div class="header-actions">
                 <button class="icon-btn admin-btn" id="toggle-admin-btn" onclick="toggleEditMode()">🛠️</button>
             </div>
@@ -1354,7 +1374,6 @@
             updateCartUI();
         }
 
-        // CORRECTION DE LA SAUVEGARDE SECURISEE LOCALSTORAGE
         function saveToLocalStorage() {
             try {
                 localStorage.setItem('fourni_market_cart', JSON.stringify(cart));

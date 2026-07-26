@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fourni Time | Détail Produit</title>
+    <title>FourniTime | Détail Produit</title>
     <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -330,7 +330,6 @@
                 return;
             }
 
-            // Chargement synchrone des catégories et produits depuis Supabase
             try {
                 const [prodRes, catRes] = await Promise.all([
                     supabaseClient.from('products').select('*'),
@@ -384,7 +383,7 @@
 
             if (effectiveSizeType === 'num_36_46') {
                 const sizes = ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46'];
-                selectedSize = sizes[3]; // Taille par défaut : 39
+                selectedSize = sizes[3];
                 selectorHtml = `
                     <div class="selector-group">
                         <label>Pointure</label>
@@ -395,7 +394,7 @@
                 `;
             } else if (effectiveSizeType === 'xs_xl') {
                 const sizes = ['XS', 'S', 'M', 'L', 'XL'];
-                selectedSize = 'M'; // Taille par défaut : M
+                selectedSize = 'M';
                 selectorHtml = `
                     <div class="selector-group">
                         <label>Taille</label>
