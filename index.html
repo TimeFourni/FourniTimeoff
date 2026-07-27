@@ -1423,7 +1423,12 @@
 
             const finishProductCreation = async () => {
                 const newProd = {
-                    name, category, brand, price, desc, sizeType,
+                    name,
+                    category,
+                    brand,
+                    price,
+                    desc,
+                    sizeType,
                     emoji: source === 'emoji' ? emoji : "",
                     image: source === 'upload' ? imageBase64 : "",
                     pinned: null,
