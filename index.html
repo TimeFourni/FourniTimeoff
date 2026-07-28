@@ -359,7 +359,7 @@
             background: rgba(255, 59, 48, 0.35);
         }
 
-        .cart-modal {
+        .cart-modal, .edit-modal {
             position: fixed;
             inset: 0;
             z-index: 1000;
@@ -370,11 +370,11 @@
             transition: visibility 0.3s;
         }
 
-        .cart-modal.open {
+        .cart-modal.open, .edit-modal.open {
             visibility: visible;
         }
 
-        .cart-modal-content {
+        .cart-modal-content, .edit-modal-content {
             position: relative;
             z-index: 1001;
             background: #0f121c;
@@ -388,11 +388,11 @@
             box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
         }
 
-        .cart-modal.open .cart-modal-content {
+        .cart-modal.open .cart-modal-content, .edit-modal.open .edit-modal-content {
             transform: translateY(0);
         }
 
-        .cart-title {
+        .cart-title, .edit-modal-title {
             font-size: 1.1rem;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -767,6 +767,12 @@
             text-align: center;
         }
 
+        .admin-action-btn.edit {
+            background: rgba(0, 240, 255, 0.2);
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
         .admin-action-btn.del {
             background: rgba(255, 59, 48, 0.3);
             border-color: var(--neon-red);
@@ -803,7 +809,7 @@
                 <button class="icon-btn admin-btn" id="toggle-admin-btn" onclick="toggleEditMode()">🛠️</button>
             </div>
         </div>
-        <input type="text" class="search-bar" id="search-input" placeholder="Recherche d'artefacts..." oninput="filterProducts()">
+        <input type="text" class="search-bar" id="search-input" placeholder="Recherche d'artefacts..." oninput="onSearchChange()">
         
         <!-- Barre de filtres par marque -->
         <div class="brand-filter-bar" id="brand-filter-bar"></div>
@@ -880,6 +886,82 @@
                 </div>
 
                 <button type="submit" class="submit-prod-btn">Injecter Produit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE MODIFICATION DU PRODUIT -->
+    <div class="edit-modal" id="edit-modal">
+        <div class="drawer-overlay show" onclick="closeEditModal()"></div>
+        <div class="edit-modal-content">
+            <div class="edit-modal-title">
+                <span>✏️ Éditeur de Produit</span>
+                <button class="drawer-close-btn" onclick="closeEditModal()">✕</button>
+            </div>
+            <form class="studio-form" style="margin-top: 1rem;" onsubmit="saveProductEdit(event)">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>Nom de l'item</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Catégorie</label>
+                    <select id="edit-category"></select>
+                </div>
+                <div class="form-group">
+                    <label>Marque</label>
+                    <input type="text" id="edit-brand">
+                </div>
+                <div class="form-group">
+                    <label>Type de Tailles</label>
+                    <select id="edit-size-type">
+                        <option value="unique">Taille unique</option>
+                        <option value="xs_xl">XS au XL</option>
+                        <option value="num_36_46">Du 36 au 45</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prix (€)</label>
+                    <input type="number" step="0.01" id="edit-price" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" id="edit-desc" required>
+                </div>
+                <div class="form-group">
+                    <label>IDs de Suggestions (séparés par virgules)</label>
+                    <input type="text" id="edit-suggestions">
+                </div>
+                <div class="form-group">
+                    <label>Source Visuel</label>
+                    <select id="edit-visuel-source" onchange="toggleEditVisuelFields()">
+                        <option value="emoji">Emoji Intégré</option>
+                        <option value="upload">Remplacer par une nouvelle image</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="edit-group-emoji">
+                    <label>Choisir Emoji</label>
+                    <select id="edit-emoji">
+                        <option value="👕">👕 Maillot</option>
+                        <option value="🧥">🧥 Veste</option>
+                        <option value="👟">👟 Sneakers</option>
+                        <option value="🕶️">🕶️ Lunettes</option>
+                        <option value="🥷">🥷 Hoodie</option>
+                        <option value="🥾">🥾 Bottes</option>
+                        <option value="📱">📱 Tablette</option>
+                        <option value="🎧">🎧 Casque Audio</option>
+                        <option value="⌚">⌚ Smartwatch</option>
+                        <option value="📦">📦 Colis / Autre</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="edit-group-upload" style="display: none;">
+                    <label>Nouvelle Image (laisser vide pour conserver l'image actuelle)</label>
+                    <input type="file" id="edit-file-input" accept="image/*">
+                </div>
+
+                <button type="submit" class="submit-prod-btn" style="background: var(--neon-cyan); color: #000;">Mettre à jour l'artefact</button>
             </form>
         </div>
     </div>
@@ -992,6 +1074,34 @@
             return p.draft === true || p.draft === "true";
         }
 
+        // NAVIGATION & SAUVEGARDE DE L'ÉTAT D'AFFICHAGE ET SCROLL
+        function goToProduct(id) {
+            sessionStorage.setItem('fournitime_nav_category', currentCategory);
+            sessionStorage.setItem('fournitime_nav_brand', currentBrand);
+            sessionStorage.setItem('fournitime_nav_search', document.getElementById('search-input').value);
+            sessionStorage.setItem('fournitime_nav_scroll', window.scrollY);
+            window.location.href = `produit.html?id=${id}`;
+        }
+
+        function restoreNavState() {
+            const savedCategory = sessionStorage.getItem('fournitime_nav_category');
+            const savedBrand = sessionStorage.getItem('fournitime_nav_brand');
+            const savedSearch = sessionStorage.getItem('fournitime_nav_search');
+            const savedScroll = sessionStorage.getItem('fournitime_nav_scroll');
+
+            if (savedCategory !== null) currentCategory = savedCategory;
+            if (savedBrand !== null) currentBrand = savedBrand;
+            if (savedSearch !== null) document.getElementById('search-input').value = savedSearch;
+
+            filterProducts();
+
+            if (savedScroll !== null) {
+                setTimeout(() => {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }, 100);
+            }
+        }
+
         async function fetchProducts() {
             await fetchCategoriesFromDb();
             await fetchProductsFromDb();
@@ -1042,7 +1152,7 @@
                 products = [...defaultProducts];
             }
             renderCategories();
-            filterProducts();
+            restoreNavState();
             updateCartUI();
         }
 
@@ -1050,6 +1160,12 @@
             const source = document.getElementById('visuel-source').value;
             document.getElementById('group-emoji').style.display = source === 'emoji' ? 'block' : 'none';
             document.getElementById('group-upload').style.display = source === 'upload' ? 'block' : 'none';
+        }
+
+        function toggleEditVisuelFields() {
+            const source = document.getElementById('edit-visuel-source').value;
+            document.getElementById('edit-group-emoji').style.display = source === 'emoji' ? 'block' : 'none';
+            document.getElementById('edit-group-upload').style.display = source === 'upload' ? 'block' : 'none';
         }
 
         function toggleEditMode() {
@@ -1097,6 +1213,10 @@
             document.getElementById('cart-modal').classList.remove('open');
         }
 
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('open');
+        }
+
         function renderCategories() {
             const navContainer = document.getElementById('drawer-content');
             navContainer.innerHTML = '';
@@ -1128,6 +1248,8 @@
             }
 
             const selectContainer = document.getElementById('new-category');
+            const editSelectContainer = document.getElementById('edit-category');
+
             if (selectContainer) {
                 selectContainer.innerHTML = '';
                 categories.forEach(cat => {
@@ -1137,9 +1259,18 @@
                     selectContainer.appendChild(option);
                 });
             }
+
+            if (editSelectContainer) {
+                editSelectContainer.innerHTML = '';
+                categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.innerText = cat.label;
+                    editSelectContainer.appendChild(option);
+                });
+            }
         }
 
-        /* --- RENDU ET GESTION DES MARQUES POUR LA CATÉGORIE ACTIVE --- */
         function renderBrandFilterBar() {
             const bar = document.getElementById('brand-filter-bar');
             bar.innerHTML = '';
@@ -1149,10 +1280,7 @@
                 return;
             }
 
-            // Récupérer les produits actifs de la catégorie en cours
             const catProducts = products.filter(p => !isProductDraft(p) && p.category === currentCategory);
-            
-            // Extraire les marques uniques (non vides)
             const brands = [...new Set(catProducts.map(p => p.brand ? p.brand.trim() : '').filter(b => b !== ''))];
 
             if (brands.length === 0) {
@@ -1162,14 +1290,12 @@
 
             bar.style.display = 'flex';
 
-            // Pill Tout
             const allPill = document.createElement('button');
             allPill.className = `brand-pill ${currentBrand === 'all' ? 'active' : ''}`;
             allPill.innerText = 'Toutes les marques';
             allPill.onclick = () => setBrand('all');
             bar.appendChild(allPill);
 
-            // Pills de chaque marque
             brands.sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' })).forEach(b => {
                 const pill = document.createElement('button');
                 pill.className = `brand-pill ${currentBrand.toLowerCase() === b.toLowerCase() ? 'active' : ''}`;
@@ -1292,6 +1418,7 @@
                     const draftActionText = isDraft ? "🟢 Publier" : "🟡 Mettre en brouillon";
                     adminActions = `
                         <div class="admin-card-actions">
+                            <button class="admin-action-btn edit" onclick="openEditProductModal('${prod.id}')">✏️ Modifier l'annonce</button>
                             <button class="admin-action-btn pin" onclick="togglePin('${prod.id}', 'category')">📌 Épingler Catégorie</button>
                             <button class="admin-action-btn pin" onclick="togglePin('${prod.id}', 'all')">📌 Épingler Tous</button>
                             <button class="admin-action-btn" onclick="toggleDraft('${prod.id}')">${draftActionText}</button>
@@ -1302,23 +1429,99 @@
 
                 card.innerHTML = `
                     ${pinBadge}
-                    <div class="product-img-wrapper" onclick="window.location.href='produit.html?id=${prod.id}'">${visuelContent}</div>
+                    <div class="product-img-wrapper" onclick="goToProduct('${prod.id}')">${visuelContent}</div>
                     <div class="product-info">
                         <div class="product-cat">
                             <span>${catLabel} ${isDraft ? '(Brouillon)' : ''}</span>
                             ${brandLabel}
                         </div>
-                        <h3 class="product-title" onclick="window.location.href='produit.html?id=${prod.id}'">${prod.name}</h3>
+                        <h3 class="product-title" onclick="goToProduct('${prod.id}')">${prod.name}</h3>
                         <p class="product-desc">${prod.desc || ''}</p>
                         <div class="product-price-row">
                             <span class="product-price">${parseFloat(prod.price || 0).toFixed(2)} €</span>
-                            <button class="add-to-cart" onclick="window.location.href='produit.html?id=${prod.id}'">Voir</button>
+                            <button class="add-to-cart" onclick="goToProduct('${prod.id}')">Voir</button>
                         </div>
                     </div>
                     ${adminActions}
                 `;
                 container.appendChild(card);
             });
+        }
+
+        /* --- FONCTIONS DE MODIFICATION DE PRODUIT DANS LE STUDIO --- */
+        function openEditProductModal(id) {
+            const prod = products.find(p => String(p.id) === String(id));
+            if (!prod) return;
+
+            document.getElementById('edit-id').value = prod.id;
+            document.getElementById('edit-name').value = prod.name || '';
+            document.getElementById('edit-category').value = prod.category || '';
+            document.getElementById('edit-brand').value = prod.brand || '';
+            document.getElementById('edit-size-type').value = prod.sizeType || 'unique';
+            document.getElementById('edit-price').value = prod.price || '';
+            document.getElementById('edit-desc').value = prod.desc || '';
+            document.getElementById('edit-suggestions').value = (prod.suggestions && Array.isArray(prod.suggestions)) ? prod.suggestions.join(', ') : '';
+
+            if (prod.image) {
+                document.getElementById('edit-visuel-source').value = 'upload';
+            } else {
+                document.getElementById('edit-visuel-source').value = 'emoji';
+                document.getElementById('edit-emoji').value = prod.emoji || '📦';
+            }
+
+            toggleEditVisuelFields();
+            document.getElementById('edit-modal').classList.add('open');
+        }
+
+        async function saveProductEdit(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('edit-id').value;
+            const prod = products.find(p => String(p.id) === String(id));
+            if (!prod) return;
+
+            const name = document.getElementById('edit-name').value;
+            const category = document.getElementById('edit-category').value;
+            const brand = document.getElementById('edit-brand').value.trim();
+            const sizeType = document.getElementById('edit-size-type').value;
+            const price = parseFloat(document.getElementById('edit-price').value);
+            const desc = document.getElementById('edit-desc').value;
+            const sugStr = document.getElementById('edit-suggestions').value;
+            const source = document.getElementById('edit-visuel-source').value;
+
+            const customSuggestions = sugStr ? sugStr.split(',').map(s => s.trim()).filter(s => s !== '') : [];
+
+            prod.name = name;
+            prod.category = category;
+            prod.brand = brand;
+            prod.sizeType = sizeType;
+            prod.price = price;
+            prod.desc = desc;
+            prod.suggestions = customSuggestions;
+
+            const finalizeUpdate = async () => {
+                await updateProductInDb(prod);
+                filterProducts();
+                closeEditModal();
+                alert("✨ Annonce produit mise à jour avec succès !");
+            };
+
+            if (source === 'emoji') {
+                prod.emoji = document.getElementById('edit-emoji').value;
+                prod.image = "";
+                await finalizeUpdate();
+            } else {
+                const fileInput = document.getElementById('edit-file-input');
+                if (fileInput.files && fileInput.files[0]) {
+                    compressAndResizeImage(fileInput.files[0], 600, 600, 0.75, async function(compressed) {
+                        prod.image = compressed;
+                        prod.emoji = "";
+                        await finalizeUpdate();
+                    });
+                } else {
+                    await finalizeUpdate();
+                }
+            }
         }
 
         async function togglePin(id, target) {
@@ -1516,11 +1719,15 @@
 
         function setCategory(cat, element) {
             currentCategory = cat;
-            currentBrand = 'all'; // Réinitialise le filtre de marque au changement de catégorie
+            currentBrand = 'all';
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             if (element) element.classList.add('active');
             filterProducts();
             closeDrawer();
+        }
+
+        function onSearchChange() {
+            filterProducts();
         }
 
         function filterProducts() {
@@ -1557,7 +1764,6 @@
             } else {
                 let catProds = products.filter(p => !isProductDraft(p) && p.category === currentCategory);
                 
-                // Application du filtre par MARQUE
                 if (currentBrand !== 'all') {
                     catProds = catProds.filter(p => p.brand && p.brand.toLowerCase() === currentBrand.toLowerCase());
                 }

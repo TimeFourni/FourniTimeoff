@@ -50,6 +50,7 @@
             gap: 6px;
             font-size: 0.85rem;
             margin-bottom: 1rem;
+            cursor: pointer;
         }
 
         .product-container {
@@ -290,7 +291,7 @@
 </head>
 <body>
 
-    <a href="index.html" class="back-btn">⬅️ Produits</a>
+    <button class="back-btn" onclick="goBackToCatalog()">⬅️ Produits</button>
 
     <div class="product-container" id="product-view">
         <p style="padding: 2rem; text-align: center; color: var(--text-muted);">Chargement de l'artefact...</p>
@@ -319,6 +320,10 @@
         let allProducts = [];
         let selectedSize = "N/A";
         let categories = [];
+
+        function goBackToCatalog() {
+            window.location.href = 'index.html';
+        }
 
         function isProductDraft(p) {
             return p.draft === true || p.draft === "true";
@@ -501,7 +506,7 @@
                 console.error("Erreur de sauvegarde dans le panier", e);
             }
 
-            window.location.href = 'index.html';
+            goBackToCatalog();
         }
 
         initProductPage();
